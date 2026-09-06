@@ -309,8 +309,8 @@ def build_slice_dataset(study: PatientStudy, cfg: PreprocessConfig,
             "patient_id": study.patient_id,
             "oar_name": oar_name,
             "slice_index": z,
-            "target_mask": target_slice.astype(np.float32),   # channel 1
-            "oar_mask": oar_slice.astype(np.float32),         # channel 2
+            "target_mask": target_slice.astype(np.uint8),      # channel 1 (binary; cast to float32 at __getitem__ time)
+            "oar_mask": oar_slice.astype(np.uint8),            # channel 2 (binary; cast to float32 at __getitem__ time)
             "dvh_label": dvh,                                  # [num_bins]
             "voxel_count": int(oar_slice.sum()),               # for weighted aggregation
         })

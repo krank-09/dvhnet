@@ -1,0 +1,15 @@
+{
+  "n_patients": 50,
+  "D2_MAE_gy": 3.583396953889701,
+  "D2_std_gy": 5.248569870560271,
+  "D50_MAE_gy": 8.008857273897549,
+  "D50_std_gy": 8.432588716107754,
+  "Dmean_MAE_gy": 5.6826763069028114,
+  "Dmean_std_gy": 5.881332945524491,
+  "MAD_mean": 0.0922374253347516,
+  "MAD_std": 0.06501946302079295,
+  "acceptance": {
+    "dmean_within_threshold": false,
+    "d2_within_threshold": false
+  }
+}

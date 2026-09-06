@@ -39,7 +39,7 @@ class DVHNet(nn.Module):
     Output: [B, num_bins]  cumulative DVH, sigmoid-bounded to [0, 1]
     """
     def __init__(self, in_channels: int = 2, num_bins: int = 256,
-                 base_channels: int = 32, fc_dims=(1024, 512, 256)):
+                 base_channels: int = 32, fc_dims=(512, 256), dropout: float = 0.4):
         super().__init__()
         # Stem
         self.stem = nn.Sequential(
@@ -57,7 +57,7 @@ class DVHNet(nn.Module):
         layers = []
         prev = feat_dim
         for dim in fc_dims:
-            layers += [nn.Linear(prev, dim), nn.ReLU(inplace=True), nn.Dropout(0.2)]
+            layers += [nn.Linear(prev, dim), nn.ReLU(inplace=True), nn.Dropout(dropout)]
             prev = dim
         self.head = nn.Sequential(*layers)
         self.out = nn.Linear(prev, num_bins)

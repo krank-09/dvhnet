@@ -14,6 +14,7 @@ import glob
 from typing import Dict, List, Optional
 
 import numpy as np
+from scipy import ndimage
 
 try:
     import torch
@@ -61,15 +62,40 @@ class DVHSliceDataset(Dataset):
 
     @staticmethod
     def _augment(target: np.ndarray, oar: np.ndarray):
-        """Light, label-preserving augmentation: masks only, dose curve unaffected
-        by pure spatial flips since it's derived from voxel counts, not shape."""
+        """Geometric augmentation on the mask pair only. The DVH label is derived
+        from per-voxel dose counts, not mask shape, so flips are exactly
+        label-preserving and small rotations/translations are approximately so
+        (rotation ~preserves voxel area with nearest-neighbour resampling;
+        translation preserves it exactly modulo boundary clipping). Aggressive
+        scaling is deliberately NOT applied -- it changes voxel count enough to
+        shift the true DVH the fixed label no longer matches.
+
+        The same transform is applied to `target` and `oar` so they stay
+        spatially registered.
+        """
         if np.random.rand() < 0.5:
-            target = np.ascontiguousarray(target[:, ::-1])
-            oar = np.ascontiguousarray(oar[:, ::-1])
+            target = target[:, ::-1]
+            oar = oar[:, ::-1]
         if np.random.rand() < 0.5:
-            target = np.ascontiguousarray(target[::-1, :])
-            oar = np.ascontiguousarray(oar[::-1, :])
-        return target, oar
+            target = target[::-1, :]
+            oar = oar[::-1, :]
+
+        if np.random.rand() < 0.5:
+            angle = np.random.uniform(-15.0, 15.0)
+            target = ndimage.rotate(target, angle, order=0, reshape=False,
+                                    mode="constant", cval=0)
+            oar = ndimage.rotate(oar, angle, order=0, reshape=False,
+                                 mode="constant", cval=0)
+
+        if np.random.rand() < 0.5:
+            h, w = target.shape
+            sy = np.random.uniform(-0.08, 0.08) * h
+            sx = np.random.uniform(-0.08, 0.08) * w
+            target = ndimage.shift(target, (sy, sx), order=0,
+                                   mode="constant", cval=0)
+            oar = ndimage.shift(oar, (sy, sx), order=0, mode="constant", cval=0)
+
+        return np.ascontiguousarray(target), np.ascontiguousarray(oar)
 
 
 def collate_fn(batch: List[Dict]) -> Dict:
@@ -101,8 +127,13 @@ def load_examples_from_shards(shard_dir: str, patient_ids: Optional[List[str]] =
             examples.append({
                 "patient_id": pid,
                 "slice_index": int(data["slice_indices"][i]),
-                "target_mask": data["target_masks"][i],
-                "oar_mask": data["oar_masks"][i],
+                # Downcast on load regardless of what's stored on disk: masks
+                # are binary and don't need float32's 4x memory -- with ~500
+                # patients / 10K+ slice examples held in one Python list
+                # (see this function's docstring), float32 masks alone push
+                # this past 5GB and OOM-kill on an 8GB machine.
+                "target_mask": data["target_masks"][i].astype(np.uint8),
+                "oar_mask": data["oar_masks"][i].astype(np.uint8),
                 "dvh_label": data["dvh_labels"][i],
                 "voxel_count": int(data["voxel_counts"][i]),
             })

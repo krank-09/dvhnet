@@ -1,0 +1,20 @@
+{
+  "n_patients": 50,
+  "D2_MAE_gy": 2.7372609744343435,
+  "D2_std_gy": 4.774540676461842,
+  "D50_MAE_gy": 6.662703496647074,
+  "D50_std_gy": 7.164357777139858,
+  "Dmean_MAE_gy": 4.87945467891183,
+  "Dmean_std_gy": 4.426080088108036,
+  "MAD_mean": 0.07771478358656168,
+  "MAD_std": 0.04968578157759694,
+  "acceptance": {
+    "dmean_within_threshold": false,
+    "d2_within_threshold": false
+  },
+  "selected_model": "best_ckpt",
+  "val_loss_by_candidate": {
+    "best_ckpt": 0.07986809079055533,
+    "swa": 0.08737354759465564
+  }
+}
